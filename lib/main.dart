@@ -25,12 +25,20 @@ class MyApp extends StatelessWidget {
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
+  final _saved = <WordPair>[];
   // #enddocregion RWS-class-only
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Startup Name Generator'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list),
+            onPressed: _pushSaved,
+            tooltip: 'Saved suggestions',
+          )
+        ],
       ),
       body: _buildSuggestions(),
     );
@@ -48,16 +56,63 @@ class _RandomWordsState extends State<RandomWords> {
         }
         return _buildRow(_suggestions[index]);
       },
-    )
+    );
   }
 
   Widget _buildRow(WordPair pair){
+    final alreadySaved = _saved.contains(pair);
     return ListTile(
       title: Text(
         pair.asPascalCase,
         style: _biggerFont,
       ),
-    )
+      trailing: Icon(
+        alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: alreadySaved ? Colors.red : null,
+        semanticLabel: alreadySaved ? 'Removed from saved' : 'Saved',
+      ),
+      onTap: (){
+        setState(() {
+          if(alreadySaved){
+            _saved.remove(pair);
+          }else{
+            _saved.add(pair);
+          }
+        });
+      },
+    );
+  }
+
+  void _pushSaved(){
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context){
+          final tiles = _saved.map(
+              (pair){
+                return ListTile(
+                  title: Text(
+                    pair.asPascalCase,
+                    style: _biggerFont,
+                  ),
+                );
+              }
+          );
+
+          final divide = tiles.isNotEmpty
+          ? ListTile.divideTiles(
+            context: context,
+            tiles: tiles
+          ).toList() : <Widget>[];
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Saved Suggetions'),
+            ),
+            body: ListView(children: divide),
+          );
+        }
+      )
+    );
   }
 }
 // #enddocregion _RandomWordsState, RWS-class-only
